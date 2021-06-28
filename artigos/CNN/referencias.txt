@@ -1,0 +1,9 @@
+[1] Kingma, Diederik P., and Jimmy Ba. "Adam: A method for stochastic optimization." arXiv preprint arXiv:1412.6980 (2014).
+
+[2] Ruder, Sebastian. "An overview of gradient descent optimization algorithms." arXiv preprint arXiv:1609.04747 (2016).
+
+[3] Vargas, Ana Caroline Gomes, Aline Paes, and Cristina Nader Vasconcelos. "Um estudo sobre redes neurais convolucionais e sua aplicação em detecção de pedestres." Proceedings of the xxix conference on graphics, patterns and images. Vol. 1. No. 4. sn, 2016.
+
+[4] Wang, Zijie J., et al. "CNN explainer: Learning convolutional neural networks with interactive visualization." IEEE Transactions on Visualization and Computer Graphics (2020).
+
+[5] Heaton, Jeff. "Ian goodfellow, yoshua bengio, and aaron courville: Deep learning." (2018): 305-307.
