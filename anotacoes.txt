@@ -6,3 +6,12 @@ AlexNet_SGD_Selu:
   -treinado em 117 epocas
   -learning_rate: 0.001
   -momentum: 0.01
+
+AlexNet_SGD_Relu:
+  -treinado em 155 epocas
+  -learning_rate: 0.001
+  -momentum: 0.01
+
+VGG16_Adam_Relu:
+  -treinado por 23 epocas
+  -learning_rate: 0.0001

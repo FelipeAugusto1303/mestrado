@@ -12,37 +12,54 @@ from matplotlib import pyplot as plt
 
 tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir="./logs")
 
+AUTOTUNE = tf.data.experimental.AUTOTUNE
+
 
 batch_size = 64
 
-train_datagen = ImageDataGenerator(
-        rescale=1./255,
-        horizontal_flip=True,
-        vertical_flip=True,
-        rotation_range = 15)
+# train_datagen = ImageDataGenerator(
+#         rescale=1./255,
+#         horizontal_flip=True,
+#         vertical_flip=True,
+#         rotation_range = 15)
 
-test_datagen = ImageDataGenerator(rescale=1./255)
+train_datagen = tf.keras.Sequential([
+    tf.keras.layers.experimental.preprocessing.Rescaling(1./255),
+    tf.keras.layers.experimental.preprocessing.RandomRotation(0.30),
+    tf.keras.layers.experimental.preprocessing.RandomFlip()
+    ])
 
-train_generator = train_datagen.flow_from_directory(
+# test_datagen = ImageDataGenerator(rescale=1./255)
+
+test_datagen = tf.keras.Sequential([
+    tf.keras.layers.experimental.preprocessing.Rescaling(1./255)
+    ])
+
+train_generator = tf.keras.preprocessing.image_dataset_from_directory(
         './dataset/train_pose/',
-        target_size=(200, 200),
+        image_size=(200, 200),
         color_mode = 'rgb',
         batch_size=batch_size,
-        class_mode='categorical',
+        label_mode="categorical"
+        
         #save_to_dir= 'dataset/',
         #subset='training',
         )
+train_generator = train_generator.map(lambda x, y: (train_datagen(x, training=True), y))
+train_generator = train_generator.cache().prefetch(buffer_size=AUTOTUNE)
 
-validation_generator = test_datagen.flow_from_directory(
+
+validation_generator = tf.keras.preprocessing.image_dataset_from_directory(
         './dataset/test_pose/',
-        target_size=(200, 200),
+        image_size=(200, 200),
         color_mode = 'rgb',
         batch_size=batch_size,
-        class_mode='categorical',
+        label_mode="categorical"
         #shuffle= 'True',
         #subset='validation',
         )
-
+validation_generator = validation_generator.map(lambda x, y: (test_datagen(x, training=True), y))
+validation_generator = validation_generator.cache().prefetch(buffer_size=AUTOTUNE)
 
 inp = Input(shape = (200,200,3))
 
@@ -60,9 +77,9 @@ x = MaxPooling2D(pool_size=(2,2), strides=2)(x)
 # x = MaxPooling2D(pool_size=(3,3))
 
 x = Flatten()(x)
-x = Dense(4096, activation='selu')(x)
+x = Dense(4096, activation='relu')(x)
 x = Dropout(0.4)(x)
-x = Dense(4096, activation='selu')(x)
+x = Dense(4096, activation='relu')(x)
 x = Dropout(0.4)(x)
 
 predictions = Dense(16, activation = 'softmax', name='camada_saida')(x)
@@ -76,12 +93,10 @@ mc2 = ModelCheckpoint('./modelos/alexNet2_loss.h5', monitor='val_loss', mode='mi
 
 model.summary()
 
-history = model.fit_generator(
+history = model.fit(
         train_generator,
-        steps_per_epoch=39423/batch_size,
         epochs=1000,
         validation_data=validation_generator,
-        validation_steps=10043/batch_size,
         callbacks=[es,mc,mc2, tensorboard_callback]
 )
 
