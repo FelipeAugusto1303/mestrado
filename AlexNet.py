@@ -15,7 +15,9 @@ tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir="./logs")
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
 
-batch_size = 64
+BATCH_SIZE = 16
+
+VALIDATION_SPLIT = 0.3
 
 # train_datagen = ImageDataGenerator(
 #         rescale=1./255,
@@ -24,7 +26,6 @@ batch_size = 64
 #         rotation_range = 15)
 
 train_datagen = tf.keras.Sequential([
-    tf.keras.layers.experimental.preprocessing.Rescaling(1./255),
     tf.keras.layers.experimental.preprocessing.RandomRotation(0.30),
     tf.keras.layers.experimental.preprocessing.RandomFlip()
     ])
@@ -36,29 +37,32 @@ test_datagen = tf.keras.Sequential([
     ])
 
 train_generator = tf.keras.preprocessing.image_dataset_from_directory(
-        './dataset/train_pose/',
+        './newDataset/',
         image_size=(200, 200),
         color_mode = 'rgb',
-        batch_size=batch_size,
-        label_mode="categorical"
-        
-        #save_to_dir= 'dataset/',
-        #subset='training',
+        batch_size=BATCH_SIZE,
+        label_mode="categorical",
+        seed=42,
+        shuffle='True',
+        subset='training',
+        validation_split=VALIDATION_SPLIT
         )
-train_generator = train_generator.map(lambda x, y: (train_datagen(x, training=True), y))
+# train_generator = train_generator.map(lambda x, y: (train_datagen(x, training=True), y))
 train_generator = train_generator.cache().prefetch(buffer_size=AUTOTUNE)
 
 
 validation_generator = tf.keras.preprocessing.image_dataset_from_directory(
-        './dataset/test_pose/',
+        './newDataset/',
         image_size=(200, 200),
         color_mode = 'rgb',
-        batch_size=batch_size,
-        label_mode="categorical"
-        #shuffle= 'True',
-        #subset='validation',
+        batch_size=BATCH_SIZE,
+        label_mode="categorical",
+        seed=42,
+        shuffle= 'True',
+        subset='validation',
+        validation_split=VALIDATION_SPLIT
         )
-validation_generator = validation_generator.map(lambda x, y: (test_datagen(x, training=True), y))
+# validation_generator = validation_generator.map(lambda x, y: (test_datagen(x, training=True), y))
 validation_generator = validation_generator.cache().prefetch(buffer_size=AUTOTUNE)
 
 inp = Input(shape = (200,200,3))
@@ -85,11 +89,11 @@ x = Dropout(0.4)(x)
 predictions = Dense(16, activation = 'softmax', name='camada_saida')(x)
 model = Model(inputs=inp, outputs=predictions)
 
-op = SGD(learning_rate=0.001, momentum=0.01)
+op = SGD(learning_rate=0.0001, momentum=0.001)
 model.compile(loss = 'categorical_crossentropy', optimizer = op, metrics = ['accuracy'])
-es = EarlyStopping(monitor='val_accuracy', mode='auto', verbose=1, patience=10)
-mc = ModelCheckpoint('./modelos/alexNet2_acc.h5', monitor='val_accuracy', mode='max', verbose=1, save_best_only=True)
-mc2 = ModelCheckpoint('./modelos/alexNet2_loss.h5', monitor='val_loss', mode='min', verbose=1, save_best_only=True)
+es = EarlyStopping(monitor='val_accuracy', mode='auto', verbose=1, patience=5)
+mc = ModelCheckpoint('./modelos/alexNet_acc_relu_70-30.h5', monitor='val_accuracy', mode='max', verbose=1, save_best_only=True)
+mc2 = ModelCheckpoint('./modelos/alexNet_loss_relu_70-30.h5', monitor='val_loss', mode='min', verbose=1, save_best_only=True)
 
 model.summary()
 
