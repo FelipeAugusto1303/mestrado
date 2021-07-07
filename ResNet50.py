@@ -14,12 +14,13 @@ from tensorflow.keras import optimizers
 import tensorflow as tf
 
 tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir="./logs")
-# tf.keras.backend.clear_session()
 
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
 
-batch_size = 32
+BATCH_SIZE = 32
+
+VALIDATION_SPLIT = 0.1
 
 # train_datagen = ImageDataGenerator(
 #         rescale=1./255,
@@ -39,32 +40,33 @@ test_datagen = tf.keras.Sequential([
     ])
 
 train_generator = tf.keras.preprocessing.image_dataset_from_directory(
-        './dataset/train_pose/',
+        './newDataset/',
         image_size=(200, 200),
         color_mode = 'rgb',
-        batch_size=batch_size,
+        batch_size=BATCH_SIZE,
         label_mode="categorical",
-        
-        # save_to_dir= './newDataset/'
-        #subset='training',
+        seed=42,
+        shuffle='True',
+        subset='training',
+        validation_split=VALIDATION_SPLIT
         )
-train_generator = train_generator.map(lambda x, y: (train_datagen(x, training=True), y))
+# train_generator = train_generator.map(lambda x, y: (train_datagen(x, training=True), y))
 train_generator = train_generator.cache().prefetch(buffer_size=AUTOTUNE)
 
 
 validation_generator = tf.keras.preprocessing.image_dataset_from_directory(
-        './dataset/test_pose/',
+        './newDataset/',
         image_size=(200, 200),
         color_mode = 'rgb',
-        batch_size=batch_size,
-        label_mode="categorical"
-        #shuffle= 'True',
-        #subset='validation',
+        batch_size=BATCH_SIZE,
+        label_mode="categorical",
+        seed=42,
+        shuffle= 'True',
+        subset='validation',
+        validation_split=VALIDATION_SPLIT
         )
 # validation_generator = validation_generator.map(lambda x, y: (test_datagen(x, training=True), y))
 validation_generator = validation_generator.cache().prefetch(buffer_size=AUTOTUNE)
-
-
 
 model = tensorflow.keras.applications.resnet.ResNet50(include_top=True,input_shape=(200,200,3),weights=None,classes=16)
 # Freeze the layers except the last 4 layers
@@ -89,11 +91,11 @@ model = tensorflow.keras.applications.resnet.ResNet50(include_top=True,input_sha
  
 # Show a summary of the model. Check the number of trainable parameters
 model.summary()
-op = Adam(lr=0.001)    
+op = SGD(learning_rate=0.0001, momentum=0.001)   
 model.compile(optimizer=op, loss='categorical_crossentropy', metrics=['accuracy'])
 es = EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=5)
-mc = ModelCheckpoint('./modelos/Resnet50best_modelacc2.h5', monitor='val_accuracy', mode='max', verbose=1, save_best_only=True)
-mc2 = ModelCheckpoint('./modelos/Resnet50best_modelloss2.h5', monitor='val_loss', mode='min', verbose=1, save_best_only=True)
+mc = ModelCheckpoint('./modelos/Resnet50_acc_90-10.h5', monitor='val_accuracy', mode='max', verbose=1, save_best_only=True)
+mc2 = ModelCheckpoint('./modelos/Resnet50_loss_90-10.h5', monitor='val_loss', mode='min', verbose=1, save_best_only=True)
 
 
 history = model.fit(
